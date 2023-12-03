@@ -29,7 +29,7 @@ public class NotificationServiceClientImpl implements NotificationServiceClient 
 
     @Override
     public void createNotification(NotificationDto notificationDto) {
-        String url = String.format("%s/notification", notificationServiceBaseUrl); // Assuming "/products" is the endpoint for creating a product
+        String url = String.format("%s/notification", notificationServiceBaseUrl);
         ParameterizedTypeReference<NotificationDto> responseType = new ParameterizedTypeReference<>() {};
         HttpEntity<NotificationDto> requestEntity = new HttpEntity<>(notificationDto);
         restTemplate.exchange(
