@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: saswatcloud/p10-ecommerce-order-service:1
+          ports:
+            - containerPort: 8080
+          env:
+          - name: MONGO_URL
+            value: mongodb://mongodb-service:27017/orders
+          - name: PRODUCT_SERVICE_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: service-config
+                key: PRODUCT_SERVICE_BASE_URL
+          - name: NOTIFICATION_SERVICE_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: service-config
+                key: NOTIFICATION_SERVICE_BASE_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  selector:
+    app: order-service
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

@@ -132,7 +132,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderOutput> getOrdersByUser(UUID userId) {
 
-        // Implement business logic to retrieve orders for a user
         List<Order> userOrders = orderRepository.findByUserId(userId);
 
         Set<UUID> productIdsSet = userOrders.stream()
