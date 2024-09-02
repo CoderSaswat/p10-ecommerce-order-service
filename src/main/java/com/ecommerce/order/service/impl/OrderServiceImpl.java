@@ -7,6 +7,7 @@ import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderItem;
 import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.order.service.OrderService;
+import com.ecommerce.order.serviceclient.InventoryServiceClient;
 import com.ecommerce.order.serviceclient.NotificationServiceClient;
 import com.ecommerce.order.serviceclient.ProductServiceClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,6 +36,7 @@ public class OrderServiceImpl implements OrderService {
     private final ModelMapper modelMapper;
     private final ProductServiceClient productServiceClient;
     private final NotificationServiceClient notificationServiceClient;
+    private final InventoryServiceClient inventoryServiceClient;
 
     @Value("${email}")
     private String email;
@@ -51,10 +53,26 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(LocalDateTime.now());
         order.setId(UUID.randomUUID());
         // Save the order to the repository
-        Order savedOrder = orderRepository.save(order);
 //        sendNotification(savedOrder.getUserId());
+        checkProductAvailabilityAndPlaceOrder(orderInput.getOrderItems());
+        Order savedOrder = orderRepository.save(order);
         sendNotifications(savedOrder.getUserId());
         return modelMapper.map(savedOrder, OrderOutput.class);
+    }
+
+    private void checkProductAvailabilityAndPlaceOrder(List<OrderItemInput> orderItems) {
+        List<UUID> productIdList = orderItems.stream().map(OrderItemInput::getProductId).toList();
+        List<ProductDto> productDtoList = productServiceClient.getProductsByIds(productIdList);
+        Map<UUID, String> productMap = productDtoList.stream()
+                .collect(Collectors.toMap(ProductDto::getId, ProductDto::getName));
+
+        orderItems.forEach(orderItemInput -> {
+            String productName = productMap.get(orderItemInput.getProductId());
+            ProductAvailabilityDto productAvailabilityDto = new ProductAvailabilityDto();
+            productAvailabilityDto.setProductName(productName);
+            productAvailabilityDto.setAmountSold(orderItemInput.getQuantity());
+            inventoryServiceClient.updateProductAvailability(productAvailabilityDto);
+        });
     }
 
     private void sendNotifications(UUID userId) {
