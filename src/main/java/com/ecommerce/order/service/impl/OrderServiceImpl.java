@@ -48,6 +48,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderOutput createOrder(OrderInput orderInput) {
+        log.info("CREATING ORDER...");
         // Implement business logic to create an order
         Order order = modelMapper.map(orderInput, Order.class);
         order.setOrderDate(LocalDateTime.now());
